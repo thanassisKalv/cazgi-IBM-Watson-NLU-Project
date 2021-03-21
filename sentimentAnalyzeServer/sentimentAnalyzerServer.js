@@ -27,7 +27,7 @@ function getNLUInstance(){
     return naturalLanguageUnderstanding;
 }
 
-
+const NLUinstance = getNLUInstance();
 
 app.get("/",(req,res)=>{
     res.render('index.html');
@@ -35,11 +35,39 @@ app.get("/",(req,res)=>{
 
 app.get("/url/emotion", (req,res) => {
 
+
     return res.send({"happy":"90","sad":"10"});
 });
 
 app.get("/url/sentiment", (req,res) => {
-    return res.send("url sentiment for "+req.query.url);
+
+    const analyzeParams = {
+        'url': req.query.url,
+        'features': {
+            'entities': {
+            'emotion': true,
+            'sentiment': true,
+            'limit': 2,
+            },
+            'keywords': {
+            'emotion': true,
+            'sentiment': true,
+            'limit': 2,
+            },
+        }
+    };
+    
+
+    NLUinstance.analyze(analyzeParams)
+    .then(analysisResults => {
+        console.log(JSON.stringify(analysisResults, null, 2));
+        return res.send("url sentiment for "+req.query.url);
+    })
+    .catch(err => {
+        console.log('error:', err);
+        return res.send("url-sentiment for "+req.query.url);
+    });
+    
 });
 
 app.get("/text/emotion", (req,res) => {
@@ -47,10 +75,32 @@ app.get("/text/emotion", (req,res) => {
 });
 
 app.get("/text/sentiment", (req,res) => {
-    return res.send("text sentiment for "+req.query.text);
+
+    const analyzeParams = {
+        'features': {
+            'syntax': {
+            'sentences': true,
+            'tokens': {
+                'lemma': true,
+                'part_of_speech': true
+            }
+            }
+        },
+        'text': req.query.text
+    };
+
+    NLUinstance.analyze(analyzeParams)
+    .then(analysisResults => {
+        console.log(JSON.stringify(analysisResults, null, 2));
+        return res.send("positive");
+    })
+    .catch(err => {
+        console.log('error:', err);
+        return res.send("negative");
+    });
 });
 
-let server = app.listen(8800, () => {
+let server = app.listen(8000, () => {
     console.log('Listening', server.address().port)
 })
 
